@@ -32,7 +32,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                 guard let self else { return }
                 let mouseLoc = NSEvent.mouseLocation
                 let activeRect = self.viewModel.geometry.activeScreenRect(isExpanded: true)
-                if !activeRect.contains(mouseLoc) && !self.viewModel.isPinned {
+                if !activeRect.contains(mouseLoc) {
                     self.viewModel.collapse()
                 }
             }
@@ -57,14 +57,6 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         toggleItem.target = self
         menu.addItem(toggleItem)
-        
-        let pinItem = NSMenuItem(
-            title: "Keep Island Open",
-            action: #selector(togglePin(_:)),
-            keyEquivalent: "p"
-        )
-        pinItem.target = self
-        menu.addItem(pinItem)
         
         menu.addItem(.separator())
         
@@ -115,14 +107,6 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         if viewModel.isExpanded {
             viewModel.collapse(force: true)
         } else {
-            viewModel.expand()
-        }
-    }
-    
-    @objc private func togglePin(_ sender: NSMenuItem) {
-        viewModel.isPinned.toggle()
-        sender.state = viewModel.isPinned ? .on : .off
-        if viewModel.isPinned {
             viewModel.expand()
         }
     }

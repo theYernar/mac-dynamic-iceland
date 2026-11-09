@@ -16,8 +16,8 @@ public struct NotchGeometry: Equatable {
     public static let canvasHeight: CGFloat = 280
     
     /// Размеры рабочей области острова в развернутом состоянии (без учета верхних ушек)
-    public static let expandedWidth: CGFloat = 540
-    public static let expandedHeight: CGFloat = 196
+    public static let expandedWidth: CGFloat = 400
+    public static let expandedHeight: CGFloat = 214
     
     /// Определяет геометрию для текущего основного экрана (или экрана с вырезом)
     public static func detect(for preferredScreen: NSScreen? = nil) -> NotchGeometry {

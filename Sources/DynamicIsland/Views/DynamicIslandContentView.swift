@@ -12,7 +12,7 @@ public struct DynamicIslandContentView: View {
     }
     
     private var bottomRadius: CGFloat {
-        viewModel.isExpanded ? 24 : 10
+        viewModel.isExpanded ? 26 : 10
     }
     
     private var bodyWidth: CGFloat {
@@ -42,23 +42,8 @@ public struct DynamicIslandContentView: View {
             ZStack(alignment: .top) {
                 NotchShape(topCornerRadius: topRadius, bottomCornerRadius: bottomRadius)
                     .fill(Color.black)
-                    .overlay(
-                        NotchShape(topCornerRadius: topRadius, bottomCornerRadius: bottomRadius)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.0),
-                                        Color.white.opacity(0.16),
-                                        Color.white.opacity(0.22)
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                ),
-                                lineWidth: 1
-                            )
-                    )
                     .shadow(
-                        color: Color.black.opacity(viewModel.isExpanded ? 0.65 : 0.0),
+                        color: Color.black.opacity(viewModel.isExpanded ? 0.5 : 0.0),
                         radius: viewModel.isExpanded ? 22 : 0,
                         x: 0,
                         y: viewModel.isExpanded ? 10 : 0
@@ -119,23 +104,11 @@ public struct DynamicIslandContentView: View {
             Spacer()
                 .frame(width: viewModel.geometry.physicalNotchWidth)
             
-            // Буфер обмена и закрепление справа от выреза.
+            // Буфер обмена справа от выреза.
             HStack(spacing: 6) {
                 Spacer(minLength: 0)
                 tabButton(for: .clipboard)
                 
-                Button(action: { viewModel.isPinned.toggle() }) {
-                    Image(systemName: viewModel.isPinned ? "pin.fill" : "pin")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(viewModel.isPinned ? .yellow : .white.opacity(0.45))
-                        .frame(width: 22, height: 22)
-                        .background(
-                            Circle()
-                                .fill(viewModel.isPinned ? Color.yellow.opacity(0.18) : Color.white.opacity(0.06))
-                        )
-                }
-                .buttonStyle(.plain)
-                .help(viewModel.isPinned ? "Unpin Island" : "Keep Island Open")
             }
             .padding(.trailing, 14)
             .frame(width: sideWidth, height: viewModel.geometry.physicalNotchHeight)
@@ -149,25 +122,18 @@ public struct DynamicIslandContentView: View {
                 viewModel.activeTab = tab
             }
         }) {
-            HStack(spacing: 4) {
-                Image(systemName: tab.iconName)
-                    .font(.system(size: 10, weight: .semibold))
-                Text(tab.rawValue)
-                    .font(.system(size: 10.5, weight: .semibold, design: .rounded))
-            }
-            .foregroundStyle(
-                isSelected
-                    ? .black
-                    : .white.opacity(0.78)
-            )
-            .padding(.horizontal, 9)
-            .padding(.vertical, 4)
-            .background(
-                Capsule()
-                    .fill(isSelected ? Color.white : Color.white.opacity(0.09))
-            )
+            Image(systemName: tab.iconName)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.white.opacity(isSelected ? 0.9 : 0.4))
+                .frame(width: 28, height: 25)
+                .background(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(.white.opacity(isSelected ? 0.07 : 0))
+                )
         }
         .buttonStyle(.plain)
+        .help(tab.rawValue)
+        .accessibilityLabel(tab.rawValue)
     }
     
     // MARK: - Основное тело развернутого острова (под вырезом камеры)
@@ -178,7 +144,7 @@ public struct DynamicIslandContentView: View {
         case .music:
             MusicTabView(
                 musicManager: viewModel.musicManager,
-                audioManager: viewModel.audioManager
+                isSourcePickerPresented: $viewModel.isSourcePickerPresented
             )
         case .clipboard:
             ClipboardTabView(clipboardManager: viewModel.clipboardManager)

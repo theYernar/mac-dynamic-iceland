@@ -143,7 +143,7 @@ public final class IslandWindowController {
             expandWorkItem?.cancel()
             expandWorkItem = nil
             
-            if viewModel.isExpanded && !viewModel.isPinned {
+            if viewModel.isExpanded && !viewModel.isSourcePickerPresented {
                 if collapseWorkItem == nil {
                     let item = DispatchWorkItem { [weak self] in
                         Task { @MainActor in

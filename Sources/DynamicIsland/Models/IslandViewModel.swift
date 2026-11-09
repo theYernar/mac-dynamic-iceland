@@ -21,8 +21,12 @@ public final class IslandViewModel: ObservableObject {
     @Published public private(set) var isExpanded: Bool = false
     /// Окно остаётся видимым до фактического завершения анимации закрытия.
     @Published public private(set) var isPresented: Bool = false
-    @Published public var isPinned: Bool = false
-    @Published public var activeTab: IslandTab = .music
+    @Published public var activeTab: IslandTab = .music {
+        didSet {
+            if isSourcePickerPresented { isSourcePickerPresented = false }
+        }
+    }
+    @Published public var isSourcePickerPresented: Bool = false
     @Published public var geometry: NotchGeometry = NotchGeometry.detect()
     
     @Published public var hapticFeedbackEnabled: Bool = {
@@ -46,7 +50,6 @@ public final class IslandViewModel: ObservableObject {
     }
     
     public let musicManager = MusicManager()
-    public let audioManager = AudioControlManager()
     public let clipboardManager = ClipboardManager()
     
     private var cancellables = Set<AnyCancellable>()
@@ -61,9 +64,6 @@ public final class IslandViewModel: ObservableObject {
             .sink { [weak self] _ in self?.objectWillChange.send() }
             .store(in: &cancellables)
         
-        audioManager.objectWillChange
-            .sink { [weak self] _ in self?.objectWillChange.send() }
-            .store(in: &cancellables)
     }
     
     public func expand() {
@@ -78,14 +78,14 @@ public final class IslandViewModel: ObservableObject {
             isExpanded = true
         } completion: { [weak self] in
             guard let self, self.presentationRevision == revision, self.isExpanded else { return }
-            self.audioManager.syncCurrentAudioState()
             self.clipboardManager.pollClipboard()
         }
         musicManager.refreshNowPlaying()
     }
     
     public func collapse(force: Bool = false, animated: Bool = true) {
-        if isPinned && !force { return }
+        if isSourcePickerPresented && !force { return }
+        if force { isSourcePickerPresented = false }
         guard isExpanded || (!animated && isPresented) else { return }
         presentationRevision &+= 1
         let revision = presentationRevision
