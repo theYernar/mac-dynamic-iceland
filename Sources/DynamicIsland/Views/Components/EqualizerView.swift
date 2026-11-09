@@ -4,40 +4,56 @@ import SwiftUI
 public struct EqualizerView: View {
     public let isPlaying: Bool
     public let color: Color
+    public let isActive: Bool
     public var barCount: Int = 4
     public var maxHeight: CGFloat = 14
     
-    @State private var phase: Double = 0
-    private let timer = Timer.publish(every: 0.16, on: .main, in: .common).autoconnect()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var elapsed: TimeInterval = 0
+    @State private var startedAt: Date?
+    private var isMoving: Bool { isActive && isPlaying && !reduceMotion }
     
-    public init(isPlaying: Bool, color: Color = .green, barCount: Int = 4, maxHeight: CGFloat = 14) {
+    public init(isPlaying: Bool, color: Color = .green, barCount: Int = 4, maxHeight: CGFloat = 14, isActive: Bool = true) {
         self.isPlaying = isPlaying
         self.color = color
+        self.isActive = isActive
         self.barCount = barCount
         self.maxHeight = maxHeight
     }
     
     public var body: some View {
-        HStack(alignment: .center, spacing: 2.5) {
-            ForEach(0..<barCount, id: \.self) { index in
-                RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                    .fill(color.gradient)
-                    .frame(width: 2.8, height: barHeight(for: index))
-                    .animation(.easeInOut(duration: 0.18), value: phase)
-                    .animation(.easeInOut(duration: 0.25), value: isPlaying)
+        TimelineView(.animation(minimumInterval: 0.16, paused: !isMoving)) { context in
+            let seconds = elapsed + (startedAt.map { max(0, context.date.timeIntervalSince($0)) } ?? 0)
+            let phase = seconds * (0.65 / 0.16)
+            HStack(alignment: .center, spacing: 2.5) {
+                ForEach(0..<barCount, id: \.self) { index in
+                    RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                        .fill(color.gradient)
+                        .frame(width: 2.8, height: barHeight(for: index, phase: phase))
+                        .animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: phase)
+                        .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: isPlaying)
+                }
             }
         }
         .frame(height: maxHeight)
-        .onReceive(timer) { _ in
-            guard isPlaying else { return }
-            phase += 0.65
-        }
+        .onAppear { updateClock(running: isMoving) }
+        .onChange(of: isMoving) { _, moving in updateClock(running: moving) }
+        .onDisappear { updateClock(running: false) }
     }
     
-    private func barHeight(for index: Int) -> CGFloat {
+    private func barHeight(for index: Int, phase: Double) -> CGFloat {
         guard isPlaying else { return 3.5 }
         let wave = abs(sin(phase + Double(index) * 1.15))
         return max(3.5, CGFloat(wave) * maxHeight)
+    }
+
+    private func updateClock(running: Bool) {
+        if running {
+            if startedAt == nil { startedAt = .now }
+        } else if let start = startedAt {
+            elapsed += max(0, Date().timeIntervalSince(start))
+            startedAt = nil
+        }
     }
 }
 

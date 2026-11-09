@@ -2,6 +2,17 @@ import SwiftUI
 
 public struct DynamicIslandContentView: View {
     @ObservedObject var viewModel: IslandViewModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var musicPalette = MusicPalette.fallback
+
+    private struct PaletteUpdateKey: Hashable {
+        let artwork: ObjectIdentifier?
+        let isActive: Bool
+    }
+
+    private var isMusicVisible: Bool {
+        viewModel.isExpanded && viewModel.activeTab == .music
+    }
     
     public init(viewModel: IslandViewModel) {
         self.viewModel = viewModel
@@ -42,6 +53,30 @@ public struct DynamicIslandContentView: View {
             ZStack(alignment: .top) {
                 NotchShape(topCornerRadius: topRadius, bottomCornerRadius: bottomRadius)
                     .fill(Color.black)
+                    .overlay {
+                        MusicAtmosphere(
+                            palette: musicPalette,
+                            isPlaying: viewModel.musicManager.isPlaying,
+                            isActive: isMusicVisible
+                        )
+                        .frame(width: NotchGeometry.expandedWidth + 32, height: NotchGeometry.expandedHeight)
+                        .frame(width: shapeWidth, height: shapeHeight, alignment: .top)
+                        .clipShape(NotchShape(topCornerRadius: topRadius, bottomCornerRadius: bottomRadius))
+                        .opacity(viewModel.activeTab == .music ? 1 : 0)
+                    }
+                    .overlay {
+                        NotchShape(topCornerRadius: topRadius, bottomCornerRadius: bottomRadius)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [musicPalette.primary.opacity(0.2), .white.opacity(0.025), musicPalette.secondary.opacity(0.13)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.7
+                            )
+                            .opacity(viewModel.activeTab == .music ? 1 : 0)
+                    }
+                    .shadow(color: musicPalette.primary.opacity(isMusicVisible ? 0.12 : 0), radius: 18, x: 0, y: 4)
                     .shadow(
                         color: Color.black.opacity(viewModel.isExpanded ? 0.5 : 0.0),
                         radius: viewModel.isExpanded ? 22 : 0,
@@ -84,6 +119,23 @@ public struct DynamicIslandContentView: View {
         }
         .frame(width: NotchGeometry.canvasWidth, height: NotchGeometry.canvasHeight, alignment: .top)
         .environment(\.locale, Locale(identifier: "en_US"))
+        .environment(\.musicPalette, musicPalette)
+        .task(id: PaletteUpdateKey(
+            artwork: viewModel.musicManager.artworkImage.map(ObjectIdentifier.init),
+            isActive: isMusicVisible
+        )) {
+            guard isMusicVisible else { return }
+            let palette: MusicPalette
+            if let image = viewModel.musicManager.artworkImage?.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+                palette = await Task.detached(priority: .utility) { MusicPalette.extract(from: image) }.value
+            } else {
+                palette = .fallback
+            }
+            guard !Task.isCancelled else { return }
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 1.1)) {
+                musicPalette = palette
+            }
+        }
     }
     
     // MARK: - Верхняя полоса в развернутом режиме (слева и справа от физического выреза камеры)
@@ -144,7 +196,8 @@ public struct DynamicIslandContentView: View {
         case .music:
             MusicTabView(
                 musicManager: viewModel.musicManager,
-                isSourcePickerPresented: $viewModel.isSourcePickerPresented
+                isSourcePickerPresented: $viewModel.isSourcePickerPresented,
+                isVisible: isMusicVisible
             )
         case .clipboard:
             ClipboardTabView(clipboardManager: viewModel.clipboardManager)
