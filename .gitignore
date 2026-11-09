@@ -1,0 +1,31 @@
+# macOS
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+
+# Swift Package Manager
+/.build/
+/.swiftpm/
+
+# Xcode local state and build output
+DerivedData/
+build/
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+
+# Generated application bundles and debug symbols
+/*.app/
+*.dSYM/
+
+# Python test runner caches
+__pycache__/
+*.py[cod]
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+!.env.sample

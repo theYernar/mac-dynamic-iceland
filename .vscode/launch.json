@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:macbook_dynamic_island}",
+            "name": "Debug DynamicIsland",
+            "target": "DynamicIsland",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug DynamicIsland"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:macbook_dynamic_island}",
+            "name": "Release DynamicIsland",
+            "target": "DynamicIsland",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release DynamicIsland"
+        }
+    ]
+}
