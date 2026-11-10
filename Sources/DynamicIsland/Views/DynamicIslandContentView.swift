@@ -13,6 +13,10 @@ public struct DynamicIslandContentView: View {
     private var isMusicVisible: Bool {
         viewModel.isExpanded && viewModel.activeTab == .music
     }
+
+    private var isClipboardVisible: Bool {
+        viewModel.isExpanded && viewModel.activeTab == .clipboard
+    }
     
     public init(viewModel: IslandViewModel) {
         self.viewModel = viewModel
@@ -54,29 +58,48 @@ public struct DynamicIslandContentView: View {
                 NotchShape(topCornerRadius: topRadius, bottomCornerRadius: bottomRadius)
                     .fill(Color.black)
                     .overlay {
-                        MusicAtmosphere(
-                            palette: musicPalette,
-                            isPlaying: viewModel.musicManager.isPlaying,
-                            isActive: isMusicVisible
-                        )
+                        ZStack {
+                            MusicAtmosphere(
+                                palette: musicPalette,
+                                isPlaying: viewModel.musicManager.isPlaying,
+                                isActive: isMusicVisible
+                            )
+                            .opacity(viewModel.activeTab == .music ? 1 : 0)
+
+                            ClipboardAtmosphere(isActive: isClipboardVisible)
+                                .opacity(viewModel.activeTab == .clipboard ? 1 : 0)
+                        }
                         .frame(width: NotchGeometry.expandedWidth + 32, height: NotchGeometry.expandedHeight)
                         .frame(width: shapeWidth, height: shapeHeight, alignment: .top)
                         .clipShape(NotchShape(topCornerRadius: topRadius, bottomCornerRadius: bottomRadius))
-                        .opacity(viewModel.activeTab == .music ? 1 : 0)
                     }
                     .overlay {
-                        NotchShape(topCornerRadius: topRadius, bottomCornerRadius: bottomRadius)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [musicPalette.primary.opacity(0.2), .white.opacity(0.025), musicPalette.secondary.opacity(0.13)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 0.7
-                            )
-                            .opacity(viewModel.activeTab == .music ? 1 : 0)
+                        ZStack {
+                            NotchShape(topCornerRadius: topRadius, bottomCornerRadius: bottomRadius)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [musicPalette.primary.opacity(0.2), .white.opacity(0.025), musicPalette.secondary.opacity(0.13)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 0.7
+                                )
+                                .opacity(viewModel.activeTab == .music ? 1 : 0)
+
+                            NotchShape(topCornerRadius: topRadius, bottomCornerRadius: bottomRadius)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [.indigo.opacity(0.32), .cyan.opacity(0.12), .purple.opacity(0.24)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 0.7
+                                )
+                                .opacity(viewModel.activeTab == .clipboard ? 1 : 0)
+                        }
                     }
                     .shadow(color: musicPalette.primary.opacity(isMusicVisible ? 0.12 : 0), radius: 18, x: 0, y: 4)
+                    .shadow(color: Color.indigo.opacity(isClipboardVisible ? 0.16 : 0), radius: 20, x: 0, y: 5)
                     .shadow(
                         color: Color.black.opacity(viewModel.isExpanded ? 0.5 : 0.0),
                         radius: viewModel.isExpanded ? 22 : 0,
